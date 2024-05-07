@@ -1,0 +1,28 @@
+name: Publish feature
+on:
+  release:
+    types: published
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+jobs:
+  test-feature:
+    uses: ./.github/workflows/test-feature.yml
+  publish-feature:
+    needs:
+      - test-feature
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: devcontainers/action@v1
+        with:
+          publish-features: "true"
+          base-path-to-features: "./src"
+          oci-registry: "ghcr.io"
+          features-namespace: "${{ github.repository_owner }}/features"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
